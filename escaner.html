@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escáner de Códigos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #3f51b5;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            background: rgba(30,40,70,0.93);
+            border-radius: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+            padding: 24px;
+            text-align: center;
+        }
+        .back-button {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: 2px solid white;
+            border-radius: 4px;
+            background-color: transparent;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        .back-button:hover {
+            background-color: white;
+            color: #3f51b5;
+        }
+        h1 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        .escanner-container {
+            position: relative;
+            margin: 20px 0;
+            width: 100%;
+            max-width: 640px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-left: auto;
+            margin-right: auto;
+            min-height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .escanner-icon {
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .escanner-status-text {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #4CAF50;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #resultadoQR {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            font-size: 18px;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: #222;
+        }
+        #zonaQR {
+            margin-top: 10px;
+            padding: 10px;
+            background: #2196f3;
+            border-radius: 8px;
+            color: white;
+            font-size: 20px;
+            display: none;
+        }
+        .historial {
+            margin-top: 20px;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .historial-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 17px;
+        }
+        .historial-item:last-child {
+            border-bottom: none;
+        }
+        .zona-label {
+            background: #2196f3;
+            color: white;
+            border-radius: 6px;
+            padding: 4px 12px;
+            margin-left: 10px;
+            font-size: 16px;
+            min-width: 70px;
+            text-align: center;
+        }
+        #mensajeErrorQR {
+            color: #ff0000;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #ffe6e6;
+            border-radius: 4px;
+            display: none;
+        }
+        .input-scanner {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 40px;
+            opacity: 0.3;
+            z-index: 99999;
+            border: 2px solid #4CAF50;
+            background: rgba(255, 255, 255, 0.9);
+            color: #000;
+            padding: 8px;
+            margin: 0;
+            font-size: 16px;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .input-scanner:focus {
+            outline: 2px solid #4CAF50;
+            outline-offset: 2px;
+            opacity: 0.8;
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .input-scanner::placeholder {
+            color: #666;
+            font-style: italic;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button onclick="window.location.href='index.html'" class="back-button">Volver</button>
+        <h1>Escáner de Códigos</h1>
+        <div class="escanner-container">
+            <div class="escanner-icon">📷</div>
+            <div class="escanner-status-text" id="escannerStatusText">Escáner activo - Listo para escanear</div>
+        </div>
+        <div class="controls">
+            <button id="activarEscanner" disabled style="background-color: #4CAF50;">Escáner Activo</button>
+        </div>
+        <div id="resultadoQR">Esperando código del escáner...</div>
+        <div id="zonaQR"></div>
+        <div class="historial" id="historialQR"></div>
+        <div id="mensajeErrorQR"></div>
+        
+        <!-- Input para capturar la entrada del escáner -->
+        <input type="text" 
+               id="hiddenInput" 
+               class="input-scanner" 
+               autocomplete="off" 
+               autocorrect="off" 
+               autocapitalize="off" 
+               spellcheck="false"
+               placeholder="Escanea aquí con tu escáner..."
+               value=""
+               tabindex="0">
+    </div>
+    <script>
+        const resultadoQR = document.getElementById('resultadoQR');
+        const zonaQR = document.getElementById('zonaQR');
+        const historialQR = document.getElementById('historialQR');
+        const mensajeErrorQR = document.getElementById('mensajeErrorQR');
+        const hiddenInput = document.getElementById('hiddenInput');
+        const escannerStatusText = document.getElementById('escannerStatusText');
+        
+        let ultimoQRDetectado = '';
+        let historialCodigos = [];
+        let codigoBuffer = '';
+        let bufferTimeout = null;
+        
+        // Enfocar el input inmediatamente al cargar
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                hiddenInput.focus();
+                hiddenInput.select();
+            }, 200);
+        });
+        
+        window.onload = function() {
+            // Enfocar el input después de un breve delay
+            setTimeout(function() {
+                hiddenInput.focus();
+                hiddenInput.select();
+            }, 300);
+            
+            // Mantener el foco constantemente (cada 100ms)
+            setInterval(function() {
+                if (document.activeElement !== hiddenInput) {
+                    hiddenInput.focus();
+                }
+            }, 100);
+            
+            // Mantener el foco cuando se hace clic en cualquier parte
+            document.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('back-button') && 
+                    e.target.tagName !== 'BUTTON' &&
+                    e.target.id !== 'hiddenInput') {
+                    setTimeout(function() {
+                        hiddenInput.focus();
+                        hiddenInput.select();
+                    }, 50);
+                }
+            }, true);
+        };
+        
+        // Método principal: capturar con evento 'input' (más confiable para escáneres HID)
+        hiddenInput.addEventListener('input', function(e) {
+            const valor = e.target.value.trim();
+            if (valor.length > 0) {
+                // El escáner envía todo el código de una vez seguido de Enter
+                // Procesar cuando hay contenido
+                clearTimeout(bufferTimeout);
+                bufferTimeout = setTimeout(function() {
+                    if (valor.length > 0) {
+                        procesarCodigo(valor);
+                        e.target.value = '';
+                        codigoBuffer = '';
+                    }
+                }, 50);
+            }
+        });
+        
+        // Método secundario: capturar Enter (los escáneres suelen enviar Enter al final)
+        hiddenInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const valor = e.target.value.trim();
+                if (valor.length > 0) {
+                    procesarCodigo(valor);
+                    e.target.value = '';
+                    codigoBuffer = '';
+                }
+            } else if (e.key === 'Tab') {
+                e.preventDefault();
+                e.target.focus();
+            }
+        });
+        
+        // Si se pierde el foco, restaurarlo inmediatamente
+        hiddenInput.addEventListener('blur', function() {
+            setTimeout(function() {
+                hiddenInput.focus();
+            }, 5);
+        });
+        
+        // Captura a nivel de documento - redirigir cualquier entrada de teclado al input
+        document.addEventListener('keydown', function(e) {
+            // Si el foco no está en el input y se presiona una tecla normal
+            if (document.activeElement !== hiddenInput && 
+                e.target !== hiddenInput && 
+                !e.target.isContentEditable &&
+                e.key.length === 1 && 
+                !e.ctrlKey && 
+                !e.metaKey && 
+                !e.altKey &&
+                e.target.tagName !== 'INPUT' &&
+                e.target.tagName !== 'TEXTAREA') {
+                // Redirigir al input
+                hiddenInput.focus();
+                hiddenInput.value = '';
+                codigoBuffer = '';
+            }
+        }, true);
+        
+        // También capturar keypress a nivel de documento
+        document.addEventListener('keypress', function(e) {
+            if (document.activeElement !== hiddenInput && 
+                e.target !== hiddenInput && 
+                !e.target.isContentEditable &&
+                e.key.length === 1 && 
+                !e.ctrlKey && 
+                !e.metaKey && 
+                !e.altKey &&
+                e.target.tagName !== 'INPUT' &&
+                e.target.tagName !== 'TEXTAREA') {
+                hiddenInput.focus();
+                hiddenInput.value = '';
+                codigoBuffer = '';
+            }
+        }, true);
+        
+        function procesarCodigo(codigoCompleto) {
+            if (!codigoCompleto || codigoCompleto.length === 0) {
+                return;
+            }
+            
+            // Evitar procesar el mismo código dos veces muy rápido
+            if (codigoCompleto === ultimoQRDetectado) {
+                return;
+            }
+            
+            ultimoQRDetectado = codigoCompleto;
+            
+            // Mostrar el código completo tal como viene del escáner
+            resultadoQR.textContent = codigoCompleto;
+            
+            // Extraer código antes del primer guion (igual que en lectorqr.html)
+            const codigoDetectado = codigoCompleto.split('-')[0].trim();
+            
+            // Buscar en todas las listas zonificadas (igual que en lectorqr.html)
+            let zonaEncontrada = '';
+            let encontrado = false;
+            let listas = JSON.parse(localStorage.getItem('zonifiedLists') || '[]');
+            
+            for(const lista of listas) {
+                const item = lista.data.find(row => String(row.codigo) === codigoDetectado);
+                if(item) {
+                    zonaEncontrada = item.zona || '';
+                    encontrado = true;
+                    break;
+                }
+            }
+            
+            // Mostrar resultado exactamente igual que en lectorqr.html
+            zonaQR.style.display = 'block';
+            zonaQR.textContent = encontrado ? `Zona: ${zonaEncontrada}` : 'Código no encontrado en listas zonificadas';
+            
+            // Agregar al historial igual que en lectorqr.html
+            agregarAlHistorial(codigoDetectado, encontrado ? zonaEncontrada : 'No encontrado');
+            
+            // Actualizar estado del escáner
+            escannerStatusText.textContent = 'Código escaneado - Listo para escanear';
+            escannerStatusText.style.color = '#4CAF50';
+            setTimeout(function() {
+                escannerStatusText.textContent = 'Escáner activo - Listo para escanear';
+                escannerStatusText.style.color = '#4CAF50';
+            }, 2000);
+            
+            // Volver a enfocar el input para el siguiente escaneo
+            setTimeout(function() {
+                hiddenInput.value = '';
+                codigoBuffer = '';
+                hiddenInput.focus();
+                hiddenInput.select();
+            }, 100);
+        }
+        
+        function agregarAlHistorial(codigo, zona) {
+            if (!historialCodigos.some(item => item.codigo === codigo)) {
+                historialCodigos.unshift({codigo, zona});
+                actualizarHistorialUI();
+            }
+        }
+        
+        function actualizarHistorialUI() {
+            historialQR.innerHTML = historialCodigos
+                .map(item => `<div class="historial-item"><span>${item.codigo}</span><span class="zona-label">${item.zona}</span></div>`)
+                .join('');
+        }
+        
+        function mostrarErrorQR(mensaje) {
+            mensajeErrorQR.textContent = mensaje;
+            mensajeErrorQR.style.display = 'block';
+            setTimeout(() => { mensajeErrorQR.style.display = 'none'; }, 5000);
+        }
+        
+        // Interceptar eventos de teclado a nivel de documento como respaldo
+        document.addEventListener('keypress', function(e) {
+            // Si el escáner envía caracteres y el input no tiene foco, redirigirlos
+            if (document.activeElement !== hiddenInput) {
+                hiddenInput.focus();
+                hiddenInput.value = '';
+                codigoBuffer = '';
+            }
+        }, true);
+    </script>
+</body>
+</html>
